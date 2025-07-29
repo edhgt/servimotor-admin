@@ -1,0 +1,7 @@
+{
+  "name": "servimotor-admin",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
