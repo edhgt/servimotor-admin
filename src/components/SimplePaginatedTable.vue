@@ -1,79 +1,53 @@
 <template>
-  <ion-card>
-    <!-- Header con búsqueda y selección de página -->
-    <ion-card-header v-if="searchable || paginable">
-      <ion-grid>
-        <ion-row class="ion-align-items-center">
-          <ion-col size="12" size-md="6" v-if="paginable">
-            <ion-select
-              interface="popover"
-              v-model="laravelResponse.per_page"
-              @ionChange="handlePerPageChange"
-              label="Filas por página"
-            >
-              <ion-select-option v-for="size in [5, 10, 15, 20, 50, 100]" :key="size" :value="size">
-                {{ size }} por página
-              </ion-select-option>
-            </ion-select>
-          </ion-col>
-
-          <ion-col size="12" size-md="6" v-if="searchable">
-            <ion-searchbar
-              v-model="searchQuery"
-              debounce="300"
-              placeholder="Buscar..."
-              mode="md"
-            />
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-card-header>
-
-    <!-- Cuerpo estilo tabla -->
-    <ion-card-content>
-      <ion-grid>
-        <ion-row class="table-header ion-text-bold">
-          <ion-col v-for="column in columns" :key="column.key">
-            {{ column.label }}
-          </ion-col>
-          <ion-col v-if="$slots.actionTitle">
-            <slot name="actionTitle" />
-          </ion-col>
-          <ion-col v-else>
-            Acciones
-          </ion-col>
-        </ion-row>
-
-        <ion-row
-          v-for="(item, index) in itemsFiltered"
-          :key="item.id"
-          class="table-row"
-        >
-          <ion-col v-for="column in columns" :key="column.key">
-            <slot :name="column.key" :value="item[column.key]" :item="item">
-              <template v-if="column.key.includes('_at')">{{ formatDate(item[column.key]) }}</template>
-              <template v-else-if="typeof item[column.key] === 'object'">{{ item[column.key]?.name }}</template>
-              <template v-else>{{ item[column.key] }}</template>
-            </slot>
-          </ion-col>
-
-          <ion-col>
-            <slot name="actions" :item="item" :index="index" />
-          </ion-col>
-        </ion-row>
-
-        <!-- Sin datos -->
-        <ion-row v-if="!itemsFiltered.length">
-          <ion-col :size="12" class="ion-text-center">
-            <slot name="emptyText" v-if="$slots.emptyText" />
-            <template v-else>No se encontraron datos.</template>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-card-content>
-  </ion-card>
-
-  <!-- Paginación -->
+  <div class="card">
+    <div class="card-header" v-if="searchable || paginable">
+      <div class="card-tools">
+        <select v-model="laravelResponse.per_page" class="form-select" @change="handlePerPageChange">
+          <option v-for="size in [5, 10, 15, 20, 50, 100, 150, 200, 500, 1000]" :key="size" :value="size">
+            {{ size }} por página
+          </option>
+        </select>
+      </div>
+      <div class="input-group w-50" v-if="searchable">
+        <ion-searchbar :debounce="1000" v-model="searchQuery" placeholder="Buscar..."></ion-searchbar>
+      </div>
+    </div>
+    <div class="card-body p-0 table-responsive">
+      <table class="table table-hover table-striped table-bordered">
+        <thead>
+          <tr>
+            <th scope="col" :class="column.thClass" :style="column.thStyle" v-for="column in columns" :key="column.key">
+              {{ column.label }}
+            </th>
+            <th v-if="$slots.actionTitle"><slot name="actionTitle"></slot></th>
+            <th v-else>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="(item, index) in itemsFiltered" :key="item.id">
+            <tr>
+              <td v-for="column in columns" :key="column.key">
+                <slot :name="column.key" :value="item[column.key]" :item="item">
+                  <template v-if="column.key.includes('_at')">{{formatDate(item[column.key])}}</template>
+                  <template v-else-if="typeof item[column.key] === 'object'">{{ item[column.key]?.name }}</template>
+                  <template v-else>{{ item[column.key] }}</template>
+                </slot>
+              </td>
+              <td v-if="$slots.actions">
+                <slot name="actions" :item="item" :index="index"></slot>
+              </td>
+            </tr>
+          </template>
+          <tr v-if="!itemsFiltered.length">
+            <td :colspan="columns.length + (columns.length ? 1 : 0)" class="text-center">
+              <slot name="emptyText" :item="item" :index="index" v-if="$slots.emptyText"></slot>
+              <span v-else>No se encontraron datos.</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <Pagination
     :from="laravelResponse.from"
     :to="laravelResponse.to"
@@ -81,76 +55,66 @@
     :prev-page-url="laravelResponse.prev_page_url"
     :next-page-url="laravelResponse.next_page_url"
     @change-page="handlePageChange"
-  />
+  ></Pagination>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, toRef } from 'vue';
-import { IonCard, IonCardHeader, IonCardContent, IonGrid, IonRow, IonCol, IonSelect, IonSelectOption, IonSearchbar } from '@ionic/vue';
-import Pagination from '@/components/Pagination.vue';
-import { formatDate } from '@/utils/dateUtils';
+<script lang="ts">
+import { ref, computed, toRef, ThHTMLAttributes } from "vue";
+import { IonItem, IonList, IonSearchbar } from '@ionic/vue';
+import { formatDate } from "../utils/dateUtils";
+import Pagination from "@/components/Pagination.vue";
 
-interface Column {
-  key: string;
-  label: string;
-  thClass?: string;
-  thStyle?: string;
-}
+export default {
+  name: "SimplePaginatedTable",
+  components: {
+    IonItem, IonList, IonSearchbar,
+    Pagination
+  },
+  props: {
+    laravelResponse: { type: Object, required: true, default: { data: [], per_page: 5}},
+    columns: { type: Array as () => { key: string; label: string, thClass: string, thStyle: ThHTMLAttributes }[], required: true },
+    searchable: { type: Boolean, default: true },
+    paginable: { type: Boolean, default: true },
+    containOptions: { type: Boolean, default: true },
+  },
+  emits: ['change-page'],
+  setup(props, context) {
+    const laravelResponse = toRef(props, 'laravelResponse');
+    const searchQuery = ref("");
+    const containOptions = toRef(props, 'containOptions');
 
-const props = defineProps<{
-  laravelResponse: {
-    data: any[];
-    per_page: number;
-    path?: string;
-    from?: number;
-    to?: number;
-    current_page?: number;
-    prev_page_url?: string | null;
-    next_page_url?: string | null;
-  };
-  columns: Column[];
-  searchable?: boolean;
-  paginable?: boolean;
-  containOptions?: boolean;
-}>();
+    const itemsFiltered = computed(() => {
+      if (!searchQuery.value) {
+        return laravelResponse.value.data;
+      }
 
-const emit = defineEmits(['change-page']);
+    const query = searchQuery.value.toLowerCase();
+      return laravelResponse.value.data.filter((item) =>
+      props.columns.some((column) => {
+        const value = item[column.key];
+        if (value == null) return false;
+        return value.toString().toLowerCase().includes(query);
+      }));
+    });
 
-const searchQuery = ref('');
+    const handlePageChange = (url: string) => {
+      context.emit('change-page', url);
+    };
 
-const itemsFiltered = computed(() => {
-  if (!searchQuery.value) return props.laravelResponse.data;
+    const handlePerPageChange = () => {
+      const url = `${laravelResponse.value.path}?page=${laravelResponse.value.current_page}`
+      context.emit('change-page', url);
+    };
 
-  const query = searchQuery.value.toLowerCase();
-
-  return props.laravelResponse.data.filter((item) =>
-    props.columns.some((column) => {
-      const value = item[column.key];
-      if (value == null) return false;
-      return value.toString().toLowerCase().includes(query);
-    })
-  );
-});
-
-const handlePageChange = (url: string) => {
-  emit('change-page', url);
-};
-
-const handlePerPageChange = () => {
-  const page = props.laravelResponse.current_page || 1;
-  const url = `${props.laravelResponse.path}?page=${page}`;
-  emit('change-page', url);
+    return {
+      laravelResponse,
+      itemsFiltered,
+      searchQuery,
+      containOptions,
+      handlePageChange,
+      handlePerPageChange,
+      formatDate
+    };
+  },
 };
 </script>
-
-<style scoped>
-.table-header {
-  border-bottom: 1px solid var(--ion-color-medium);
-  padding: 0.5rem 0;
-}
-
-.table-row {
-  border-bottom: 1px solid var(--ion-color-light);
-  padding: 0.5rem 0;
-}
-</style>

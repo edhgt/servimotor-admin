@@ -7,6 +7,7 @@ import adminRoutes from './modules/admin.routes.js';
 const routes: Array<RouteRecordRaw> = [
   {
     path: '',
+    name: 'login',
     redirect: '/login'
   },
   {

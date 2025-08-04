@@ -3,6 +3,4 @@ http://ionicframework.com/docs/theming/ */
 
 span[role="alert"] {
     color: var(--ion-color-danger);
-    /* font-size: 14px; */
-    margin-left: 15px;
 }
