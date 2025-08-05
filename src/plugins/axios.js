@@ -8,13 +8,11 @@ axios.interceptors.request.use(config => {
     config.headers.Authorization = 'Bearer ' + sessionStorage.getItem('access_token')
     return config
 }, (error) => {
-    console.log(error.response, 'aa')
     Promise.reject(error)
 });
 
 axios.interceptors.response.use(
     response => {
-        console.log(response)
         return response
     },
     async error => {

@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header translucent>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
@@ -16,10 +16,7 @@
         </ion-toolbar>
       </ion-header>
 
-      <button class="btn btn-primary float-end" @click="create">
-        <i class="bi bi-person-up"></i>
-        Agregar usuario
-      </button>
+      <ion-button @click="create">Agregar usuario</ion-button>
       <SimplePaginatedTable :laravel-response="state.laravelResponse" :columns="columns" @change-page="index">
         <template #deleted_at="{ value }">
           <span class="badge text-bg-success" v-if="value == null">Activo</span>
@@ -81,9 +78,9 @@ export default {
   },
   setup() {
     const toast = useToast();
-    const apiUrl = '/api/users';
+    const apiUrl = 'users';
     const state = reactive({
-      laravelResponse: { per_page: 5, data: [] },
+      laravelResponse: { per_page: 5, data: [], links: {}, meta: {} },
       ldapUsers: [],
       rolesSelected: [],
     });
@@ -127,7 +124,9 @@ export default {
 
     const index = (url = undefined) => {
       const apiUrlIndex = url ? url : `${apiUrl}?per_page=${state.laravelResponse.per_page}`;
-      axios.get(apiUrlIndex).then(response => state.laravelResponse = response.data);
+      axios.get(apiUrlIndex).then(response => {
+        state.laravelResponse = response.data;
+      });
     };
     const create = () => {
       modalImportUser.value.isVisible = true;

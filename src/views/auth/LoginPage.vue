@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-content>
+    <ion-content fullscreen>
       <ion-row>
         <ion-col size-md="6" offset-md="3" size="12" class="ion-padding">
           <ion-thumbnail class="thumbnail-center">
@@ -32,7 +32,7 @@
                     </Field>
                   </ion-item>
                   <ErrorMessage name="password" />
-                  <ion-button type="submit" class="ion-padding-top" shape="round" color="primary"> Iniciar sesión </ion-button>
+                  <ion-button type="submit" class="ion-padding" shape="round" color="primary"> Iniciar sesión </ion-button>
                 </ion-list>
               </form>
             </ion-card-content>

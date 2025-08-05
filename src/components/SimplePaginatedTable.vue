@@ -1,15 +1,19 @@
 <template>
+   <ion-grid>
+    <ion-row>
+      <ion-col>
+        <ion-select size="auto" label-placement="floating" v-model="laravelResponse.meta.per_page">
+          <ion-select-option v-for="size in [5, 10, 15, 20, 50, 100, 150, 200, 500, 1000]" :key="size" :value="size">{{ size }} por página</ion-select-option>
+        </ion-select>
+      </ion-col>
+      <ion-col>
+        <ion-searchbar :debounce="1000" v-model="searchQuery" placeholder="Buscar..." v-if="searchable"></ion-searchbar>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
   <div class="card">
     <div class="card-header" v-if="searchable || paginable">
       <div class="card-tools">
-        <select v-model="laravelResponse.per_page" class="form-select" @change="handlePerPageChange">
-          <option v-for="size in [5, 10, 15, 20, 50, 100, 150, 200, 500, 1000]" :key="size" :value="size">
-            {{ size }} por página
-          </option>
-        </select>
-      </div>
-      <div class="input-group w-50" v-if="searchable">
-        <ion-searchbar :debounce="1000" v-model="searchQuery" placeholder="Buscar..."></ion-searchbar>
       </div>
     </div>
     <div class="card-body p-0 table-responsive">
@@ -49,25 +53,41 @@
     </div>
   </div>
   <Pagination
-    :from="laravelResponse.from"
-    :to="laravelResponse.to"
-    :per-page="laravelResponse.per_page"
-    :prev-page-url="laravelResponse.prev_page_url"
-    :next-page-url="laravelResponse.next_page_url"
+    :from="laravelResponse.meta.from"
+    :to="laravelResponse.meta.to"
+    :per-page="laravelResponse.meta.per_page"
+    :prev-page-url="laravelResponse.links.prev"
+    :next-page-url="laravelResponse.links.next"
     @change-page="handlePageChange"
   ></Pagination>
 </template>
 
 <script lang="ts">
 import { ref, computed, toRef, ThHTMLAttributes } from "vue";
-import { IonItem, IonList, IonSearchbar } from '@ionic/vue';
+import {
+  IonCol,
+  IonGrid,
+  IonItem,
+  IonList,
+  IonRow,
+  IonSearchbar,
+  IonSelect,
+  IonSelectOption,
+} from '@ionic/vue';
 import { formatDate } from "../utils/dateUtils";
 import Pagination from "@/components/Pagination.vue";
 
 export default {
   name: "SimplePaginatedTable",
   components: {
-    IonItem, IonList, IonSearchbar,
+    IonCol,
+    IonGrid,
+    IonItem,
+    IonList,
+    IonRow,
+    IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     Pagination
   },
   props: {
