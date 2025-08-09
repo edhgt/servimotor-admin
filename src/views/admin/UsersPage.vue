@@ -1,41 +1,33 @@
 <template>
   <ion-page>
-    <ion-header translucent>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button color="primary"></ion-menu-button>
-        </ion-buttons>
-        <ion-title>{{ $route.meta.title }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
+    <HeaderIconMenu/>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">{{ $route.meta.title }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-button @click="create">Agregar usuario</ion-button>
-      <SimplePaginatedTable :laravel-response="state.laravelResponse" :columns="columns" @change-page="index">
+      <ToolbarTitle />
+      <ion-button size="small" @click="create">Agregar usuario</ion-button>
+      <ListComponent :laravel-response="state.laravelResponse" :columns="columns" @change-page="index">
         <template #deleted_at="{ value }">
           <span class="badge text-bg-success" v-if="value == null">Activo</span>
           <span class="badge text-bg-danger" v-else>Inactivo</span>
         </template>
         <template #actions="{ item, index }">
-          <button type="button" class="btn btn-primary btn-sm" title="Modificar usuario" @click="edit(item, index)">
+          <button type="button" title="Modificar usuario" @click="edit(item, index)">
             <i class="bi bi-pencil-square"></i>
           </button>
-          <button type="button" class="btn btn-danger btn-sm" title="Deshabilitar usuario" @click="destroy(item, index)"
+          <button type="button" title="Deshabilitar usuario" @click="destroy(item, index)"
             v-if="item.deleted_at == null">
             <i class="bi bi-trash"></i>
           </button>
-          <button type="button" class="btn btn-success btn-sm" title="Habilitar usuario"
+          <button type="button" title="Habilitar usuario"
             @click="restore(item.id, index)" v-else>
             <i class="bi bi-check-square"></i>
           </button>
         </template>
-      </SimplePaginatedTable>
+      </ListComponent>
+      <Modal
+        :title="modalFormUser.title"
+        :size="modalFormUser.size"
+        v-model="modalFormUser.isOpen"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -47,6 +39,7 @@ import { useToast } from "vue-toastification";
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import {
+  IonButton,
   IonButtons,
   IonContent,
   IonHeader,
@@ -55,16 +48,19 @@ import {
   IonTitle,
   IonToolbar
 } from '@ionic/vue';
-import SimplePaginatedTable from "@/components/SimplePaginatedTable.vue";
+import HeaderIconMenu from "@/layouts/HeaderIconMenu.vue";
 import Modal from "@/components/Modal.vue";
 import Select from "@/components/Select.vue";
 import axios from "@/plugins/axios";
+import ListComponent from "@/components/ListComponent.vue";
+import ToolbarTitle from "@/layouts/ToolbarTitle.vue";
 
 export default {
   name: 'Users',
   components: {
     Form, Field, ErrorMessage,
     'v-select': VueSelect,
+    IonButton,
     IonButtons,
     IonContent,
     IonHeader,
@@ -72,32 +68,35 @@ export default {
     IonPage,
     IonTitle,
     IonToolbar,
-    SimplePaginatedTable,
+    HeaderIconMenu,
+    ToolbarTitle,
     Modal,
     Select,
+    ListComponent
   },
   setup() {
     const toast = useToast();
     const apiUrl = 'users';
     const state = reactive({
-      laravelResponse: { per_page: 5, data: [], links: {}, meta: {} },
+      laravelResponse: { data: [], links: {}, meta: { per_page: 5} },
       ldapUsers: [],
       rolesSelected: [],
     });
     const columns = [
       { key: 'id', label: 'ID' },
       { key: 'name', label: 'Nombre' },
-      { key: 'description', label: 'Descripción' },
       { key: 'username', label: 'Usuario' },
       { key: 'email', label: 'Correo electrónico' },
-      { key: 'created_at', label: 'Fecha creación' },
-      { key: 'updated_at', label: 'Fecha actualiación' },
       { key: 'deleted_at', label: 'Estado' },
     ];
     const { values: userForm, handleSubmit, setFieldValue, setValues, setFieldError, resetForm, resetField } = useForm();
 
-    const modalImportUser = ref({ title: 'Importar usuario', isVisible: false });
-    const modalFormUser = ref({ title: 'Actualizar usuario', isVisible: false });
+    const modalImportUser = ref({ title: 'Importar usuario', isOpen: false });
+    const modalFormUser = ref({
+      title: 'Actualizar usuario',
+      size: 'md',
+      isOpen: false,
+    });
     const ldapSearch = ref({
       types: [
         { code: 'samaccountname', label: 'Usuario' },
@@ -123,16 +122,13 @@ export default {
     };
 
     const index = (url = undefined) => {
-      const apiUrlIndex = url ? url : `${apiUrl}?per_page=${state.laravelResponse.per_page}`;
+      const apiUrlIndex = url ? url : `${apiUrl}?per_page=${state.laravelResponse.meta.per_page}`;
       axios.get(apiUrlIndex).then(response => {
         state.laravelResponse = response.data;
       });
     };
     const create = () => {
-      modalImportUser.value.isVisible = true;
-      ldapSearch.value.searching = false;
-      state.ldapUsers = [];
-      resetForm();
+      modalFormUser.value.isOpen = true;
     };
 
     const store = (ldapUser, index) => {

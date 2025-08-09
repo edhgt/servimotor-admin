@@ -16,8 +16,8 @@ axios.interceptors.response.use(
         return response
     },
     async error => {
+        const toastModule = await import('@/plugins/ionic-toast');
         if(error.response.status === 401 && error.response.statusText === 'Unauthorized') {
-            const toastModule = await import('@/plugins/ionic-toast');
             toastModule.showToast({
                 message: 'Su sesión ha expirado. Por favor, inicie sesión de nuevo.',
                 color: 'danger',
@@ -27,7 +27,15 @@ axios.interceptors.response.use(
             const module = await import('@/router')
             const router = module.default
             router.push({ name: 'login' })
+        } else {
+            toastModule.showToast({
+                message: 'Error: ' + error.response.statusText,
+                color: 'danger',
+                buttons: ['Cerrar'],
+                position: 'bottom'
+            });
         }
+
         return Promise.reject(error)
     }
 );
