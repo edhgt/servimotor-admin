@@ -31,15 +31,6 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: 'Inicio'}
       },
       ...adminRoutes,
-      {
-        path: '',
-        redirect: 'folder/Inbox',
-        name: 'folder'
-      },
-      {
-        path: 'folder/:id',
-        component: () => import ('../views/FolderPage.vue')
-      },
     ]
   },
 ]

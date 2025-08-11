@@ -1,105 +1,109 @@
 <template>
-  <div class="ion-padding">
-    <!-- Controles -->
-    <div class="controls" v-if="searchable || paginable">
-      <ion-select v-if="paginable" v-model="perPage" interface="popover" @ionChange="handlePerPageChange">
-        <ion-select-option v-for="size in [5, 10, 15, 20, 50, 100]" :key="size" :value="size">
-          {{ size }} por página
-        </ion-select-option>
-      </ion-select>
-      <ion-searchbar v-if="searchable" v-model="searchQuery" placeholder="Buscar..."></ion-searchbar>
-    </div>
+  <!-- Selector de vista -->
+  <ion-segment v-model="viewMode">
+    <ion-segment-button value="list">
+      <ion-icon :icon="listOutline"></ion-icon>
+    </ion-segment-button>
+    <ion-segment-button value="grid">
+      <ion-icon :icon="gridOutline"></ion-icon>
+    </ion-segment-button>
+  </ion-segment>
 
-    <!-- Selector de vista -->
-    <ion-segment v-model="viewMode">
-      <ion-segment-button value="list">
-        <ion-icon :icon="listOutline"></ion-icon>
-      </ion-segment-button>
-      <ion-segment-button value="grid">
-        <ion-icon :icon="gridOutline"></ion-icon>
-      </ion-segment-button>
-    </ion-segment>
+  <!-- Controles -->
+  <ion-grid v-if="searchable || paginable">
+    <ion-row>
+      <ion-col>
+        <ion-searchbar v-if="searchable" v-model="searchQuery" placeholder="Buscar..."></ion-searchbar>
+      </ion-col>
+      <ion-col size="auto">
+        <ion-select v-if="paginable" v-model="perPage" interface="popover" @ionChange="handlePerPageChange">
+          <ion-select-option v-for="size in [5, 10, 15, 20, 50, 100]" :key="size" :value="size">
+            {{ size }} por página
+          </ion-select-option>
+        </ion-select>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
-    <!-- Vista Lista (adaptada con lógica de tabla) -->
-    <ion-list :inset="true" v-if="viewMode === 'list'">
-      <ion-item-sliding v-for="(item, index) in itemsFiltered" :key="item.id">
-        <ion-item lines="full" detail="false" button @click="openDetail(item)">
+  <!-- Vista Lista (adaptada con lógica de tabla) -->
+  <ion-list :inset="true" v-if="viewMode === 'list'">
+    <ion-item-sliding v-for="(item, index) in itemsFiltered" :key="item.id">
+      <ion-item lines="full" detail="false" button @click="openDetail(item)">
+        <ion-thumbnail slot="start" v-if="item.img">
+          <img :src="item.img" :alt="item.title" />
+        </ion-thumbnail>
+        <ion-label>
+          <!-- Campo principal -->
+          <h2>
+            <slot :name="columns[0].key" :value="item[columns[0].key]" :item="item">
+              {{ item[columns[0].key] }}
+            </slot>
+          </h2>
+          <!-- Campos secundarios -->
+          <p v-for="column in columns.slice(1, columns.length - 1)" :key="column.key">
+            <strong>{{ column.label }}:</strong>
+            <slot :name="column.key" :value="item[column.key]" :item="item">
+              <template v-if="column.key.includes('_at')">{{ formatDate(item[column.key]) }}</template>
+              <template v-else-if="typeof item[column.key] === 'object'">{{ item[column.key]?.name }}</template>
+              <template v-else>{{ item[column.key] }}</template>
+            </slot>
+          </p>
+        </ion-label>
+      </ion-item>
+
+      <!-- Acciones al deslizar -->
+      <ion-item-options side="end" v-if="$slots.actions">
+        <ion-item-option>
+          <slot name="actions" :item="item" :index="index"></slot>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+
+    <ion-item v-if="!itemsFiltered.length">
+      <ion-label class="ion-text-center">
+        <slot name="emptyText" v-if="$slots.emptyText"></slot>
+        <span v-else>No se encontraron datos.</span>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <!-- Vista Grid -->
+  <ion-grid v-else-if="viewMode === 'grid'">
+    <ion-row>
+      <ion-col size="6" size-sm="4" size-md="3" v-for="(item, index) in itemsFiltered" :key="item.id">
+        <ion-card button>
           <ion-thumbnail slot="start" v-if="item.img">
             <img :src="item.img" :alt="item.title" />
           </ion-thumbnail>
-          <ion-label>
-            <!-- Campo principal -->
-            <h2>
+          <ion-card-header>
+            <ion-card-title>
               <slot :name="columns[0].key" :value="item[columns[0].key]" :item="item">
                 {{ item[columns[0].key] }}
               </slot>
-            </h2>
+            </ion-card-title>
+            <!-- Campo principal -->
             <!-- Campos secundarios -->
             <p v-for="column in columns.slice(1, columns.length - 1)" :key="column.key">
-              <strong>{{ column.label }}:</strong>
               <slot :name="column.key" :value="item[column.key]" :item="item">
                 <template v-if="column.key.includes('_at')">{{ formatDate(item[column.key]) }}</template>
                 <template v-else-if="typeof item[column.key] === 'object'">{{ item[column.key]?.name }}</template>
                 <template v-else>{{ item[column.key] }}</template>
               </slot>
             </p>
-          </ion-label>
-        </ion-item>
-
-        <!-- Acciones al deslizar -->
-        <ion-item-options side="end" v-if="$slots.actions">
-          <ion-item-option>
+          </ion-card-header>
+          <div class="ion-padding" v-if="$slots.actions">
             <slot name="actions" :item="item" :index="index"></slot>
-          </ion-item-option>
-        </ion-item-options>
-      </ion-item-sliding>
+          </div>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
-      <ion-item v-if="!itemsFiltered.length">
-        <ion-label class="ion-text-center">
-          <slot name="emptyText" v-if="$slots.emptyText"></slot>
-          <span v-else>No se encontraron datos.</span>
-        </ion-label>
-      </ion-item>
-    </ion-list>
-
-    <!-- Vista Grid -->
-    <ion-grid v-else-if="viewMode === 'grid'">
-      <ion-row>
-        <ion-col size="6" size-sm="4" size-md="3" v-for="(item, index) in itemsFiltered" :key="item.id">
-          <ion-card button>
-            <ion-thumbnail slot="start" v-if="item.img">
-              <img :src="item.img" :alt="item.title" />
-            </ion-thumbnail>
-            <ion-card-header>
-              <ion-card-title>
-                <slot :name="columns[0].key" :value="item[columns[0].key]" :item="item">
-                  {{ item[columns[0].key] }}
-                </slot>
-              </ion-card-title>
-              <!-- Campo principal -->
-              <!-- Campos secundarios -->
-              <p v-for="column in columns.slice(1, columns.length - 1)" :key="column.key">
-                <slot :name="column.key" :value="item[column.key]" :item="item">
-                  <template v-if="column.key.includes('_at')">{{ formatDate(item[column.key]) }}</template>
-                  <template v-else-if="typeof item[column.key] === 'object'">{{ item[column.key]?.name }}</template>
-                  <template v-else>{{ item[column.key] }}</template>
-                </slot>
-              </p>
-            </ion-card-header>
-            <div class="ion-padding" v-if="$slots.actions">
-              <slot name="actions" :item="item" :index="index"></slot>
-            </div>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-
-    <!-- Paginación -->
-    <PaginationControls v-if="paginable" :from="laravelResponse.meta.from" :to="laravelResponse.meta.to"
-      :per-page="laravelResponse.meta.per_page" :prev-page-url="laravelResponse.links.prev"
-      :first-page-url="laravelResponse.links.first" :next-page-url="laravelResponse.links.next"
-      @change-page="handlePageChange" />
-  </div>
+  <!-- Paginación -->
+  <PaginationControls v-if="paginable" :from="laravelResponse.meta.from" :to="laravelResponse.meta.to"
+    :per-page="laravelResponse.meta.per_page" :prev-page-url="laravelResponse.links.prev"
+    :first-page-url="laravelResponse.links.first" :next-page-url="laravelResponse.links.next"
+    @change-page="handlePageChange" />
 </template>
 
 <script setup>
@@ -164,12 +168,6 @@ function handlePerPageChange() {
 </script>
 
 <style scoped>
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
 ion-card img {
   width: 100%;
   height: 120px;

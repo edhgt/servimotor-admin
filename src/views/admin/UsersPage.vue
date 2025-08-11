@@ -1,35 +1,29 @@
 <template>
-  <ion-page>
-    <HeaderIconMenu/>
-    <ion-content :fullscreen="true">
-      <ToolbarTitle />
-      <ion-button size="small" @click="create">Agregar usuario</ion-button>
-      <ListComponent :laravel-response="state.laravelResponse" :columns="columns" @change-page="index">
-        <template #deleted_at="{ value }">
-          <span class="badge text-bg-success" v-if="value == null">Activo</span>
-          <span class="badge text-bg-danger" v-else>Inactivo</span>
-        </template>
-        <template #actions="{ item, index }">
-          <button type="button" title="Modificar usuario" @click="edit(item, index)">
-            <i class="bi bi-pencil-square"></i>
-          </button>
-          <button type="button" title="Deshabilitar usuario" @click="destroy(item, index)"
-            v-if="item.deleted_at == null">
-            <i class="bi bi-trash"></i>
-          </button>
-          <button type="button" title="Habilitar usuario"
-            @click="restore(item.id, index)" v-else>
-            <i class="bi bi-check-square"></i>
-          </button>
-        </template>
-      </ListComponent>
-      <Modal
-        :title="modalFormUser.title"
-        :size="modalFormUser.size"
-        v-model="modalFormUser.isOpen"
-      />
-    </ion-content>
-  </ion-page>
+  <ion-button slot="end" size="small" @click="create">Agregar usuario</ion-button>
+  <ListComponent :laravel-response="state.laravelResponse" :columns="columns" @change-page="index">
+    <template #deleted_at="{ value }">
+      <span class="badge text-bg-success" v-if="value == null">Activo</span>
+      <span class="badge text-bg-danger" v-else>Inactivo</span>
+    </template>
+    <template #actions="{ item, index }">
+      <button type="button" title="Modificar usuario" @click="edit(item, index)">
+        <i class="bi bi-pencil-square"></i>
+      </button>
+      <button type="button" title="Deshabilitar usuario" @click="destroy(item, index)"
+        v-if="item.deleted_at == null">
+        <i class="bi bi-trash"></i>
+      </button>
+      <button type="button" title="Habilitar usuario"
+        @click="restore(item.id, index)" v-else>
+        <i class="bi bi-check-square"></i>
+      </button>
+    </template>
+  </ListComponent>
+  <Modal
+    :title="modalFormUser.title"
+    :size="modalFormUser.size"
+    v-model="modalFormUser.isOpen"
+  />
 </template>
 
 <script>
@@ -40,20 +34,11 @@ import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import {
   IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar
 } from '@ionic/vue';
-import HeaderIconMenu from "@/layouts/HeaderIconMenu.vue";
 import Modal from "@/components/Modal.vue";
 import Select from "@/components/Select.vue";
 import axios from "@/plugins/axios";
 import ListComponent from "@/components/ListComponent.vue";
-import ToolbarTitle from "@/layouts/ToolbarTitle.vue";
 
 export default {
   name: 'Users',
@@ -61,15 +46,6 @@ export default {
     Form, Field, ErrorMessage,
     'v-select': VueSelect,
     IonButton,
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonMenuButton,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    HeaderIconMenu,
-    ToolbarTitle,
     Modal,
     Select,
     ListComponent
@@ -127,6 +103,7 @@ export default {
         state.laravelResponse = response.data;
       });
     };
+
     const create = () => {
       modalFormUser.value.isOpen = true;
     };

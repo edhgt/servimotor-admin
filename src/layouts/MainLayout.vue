@@ -1,32 +1,48 @@
 <template>
-  <ion-page>
-    <ion-split-pane content-id="main-content">
-      <ion-menu content-id="main-content" type="overlay">
-        <ion-content>
-          <ion-list id="inbox-list">
-            <ion-list-header>{{ userStore.user.name }}</ion-list-header>
-            <ion-note>{{ userStore.user.email }}</ion-note>
+  <!-- Menú lateral -->
+  <ion-menu content-id="main-content">
+    <ion-content>
+      <ion-list>
+        <ion-list-header>{{ userStore.user.name }}</ion-list-header>
+        <ion-note class="ion-padding-start">
+          {{ userStore.user.email }}
+        </ion-note>
 
-            <ion-menu-toggle :auto-hide="false" v-for="(p, i) in userStore.menu" :key="i">
-              <ion-item @click="selectedIndex = i" router-direction="root" :router-link="p.route" lines="none" :detail="false" class="hydrated" :class="{ selected: selectedIndex === i }">
-                <ion-icon aria-hidden="true" slot="start" :md="p.icon"></ion-icon>
-                <ion-label>{{ p.label }}</ion-label>
-              </ion-item>
-            </ion-menu-toggle>
-          </ion-list>
+        <ion-menu-toggle
+          v-for="(p, i) in userStore.menu"
+          :key="i"
+          :auto-hide="false"
+        >
+          <ion-item
+            button
+            router-direction="root"
+            :router-link="p.route"
+            :class="{ selected: selectedIndex === i }"
+            @click="selectedIndex = i"
+          >
+            <ion-icon slot="start" :icon="p.icon"></ion-icon>
+            <ion-label>{{ p.label }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
 
-          <!-- <ion-list id="labels-list">
-            <ion-list-header>Labels</ion-list-header>
+  <!-- Contenido principal -->
+  <ion-page id="main-content">
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button />
+        </ion-buttons>
+        <ion-title>{{ $route.meta.title }}</ion-title>
+      </ion-toolbar>
+    </ion-header>
 
-            <ion-item v-for="(label, index) in labels" lines="none" :key="index">
-              <ion-icon aria-hidden="true" slot="start" :ios="bookmarkOutline" :md="bookmarkSharp"></ion-icon>
-              <ion-label>{{ label }}</ion-label>
-            </ion-item>
-          </ion-list> -->
-        </ion-content>
-      </ion-menu>
-      <ion-router-outlet id="main-content"></ion-router-outlet>
-    </ion-split-pane>
+    <ion-content>
+      <router-view />
+    </ion-content>
+
   </ion-page>
 </template>
 
@@ -42,8 +58,6 @@ import {
   IonMenu,
   IonMenuToggle,
   IonNote,
-  IonRouterOutlet,
-  IonSplitPane,
 } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { useUserStore } from '@/store/user';
@@ -52,7 +66,7 @@ import { loadRoleRoutes } from '@/router';
 const selectedIndex = ref(0);
 const userStore = useUserStore();
 
-onMounted(async() => {
+onMounted(async () => {
   await userStore.fetchUserProfile();
   await loadRoleRoutes(['admin.routes.js']);
   // if (userStore.isSuperAdmin()) {

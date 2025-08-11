@@ -1,6 +1,6 @@
 <template>
     <div class="pagination-container">
-        <ion-button fill="outline" size="small" v-if="prevPageUrl && nextPageUrl" @click="goToPage(firstPageUrl)">
+        <ion-button fill="outline" size="small" v-if="prevPageUrl" @click="goToPage(firstPageUrl)">
             <ion-icon slot="start" :icon="homeOutline">
             </ion-icon>
         </ion-button>
